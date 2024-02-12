@@ -56,14 +56,11 @@ void loop() {
   if(throttle>300) dir = -1;
   if(throttle<200) dir = 1;
 
-  delayMicroseconds(300); //wait for dshot bidirectional telemetry
-/*
   Serial.printf(" throttle=%d ",throttle);
   Serial.printf(" erpm_us=%d ",dshot3b.erpm_us);
   Serial.printf(" temp=%dC ",dshot3b.telem[1]);
   Serial.printf(" bidir_cnt=%d bidir_ok=%d",dshot3b.telem_cnt, dshot3b.telem_ok_cnt);
   Serial.println(); 
-  */
 
   delay(1);
 }

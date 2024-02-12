@@ -92,11 +92,11 @@ void DSHOT::cmd(int cmd, bool telem) {
 
 
 void DSHOT::arm() {
-  //arm procedure: pull pin low, throttle 0, throttle 1, throttle 0 (each step 0.5 sec)
-  // FVT LittleBee 20A - BlueJay v0.19 -> 300 and 300bidir work
-  // Hobbywing Xrotor Micro 60A 4in1 - BLHeli32 v32.9 -> 300 works, but not 300bidir
+  //arm procedure: pull pin low, motor stop, throttle 0, motor stop (each step 0.5 sec)
+  // FVT LittleBee 20A - BlueJay v0.19 -> 300, 600, 300bidir, 600bidir work
+  // Hobbywing Xrotor Micro 60A 4in1 - BLHeli32 v32.9 -> 300 works, 300bidir sometimes works.... (but same problem in BetaFlight motor tester, is this ESC related???)
 
-  //pull ESC line low (0.5 sec)
+  //pull ESC line low (0.5 sec) - needed for BlueJay bidirectional
   for(int ch=0;ch<RMT_CHANNELS;ch++) {
     if(tx_channel_map[ch]) {
       int pin = tx_channel_map[ch]->get_pin();
@@ -106,35 +106,37 @@ void DSHOT::arm() {
   }
   delay(500);
 
+  //send motor stop (0.5 sec)
+  for(int i=0;i<500;i++) {
+    for(int ch=0;ch<RMT_CHANNELS;ch++) {
+      if(tx_channel_map[ch]) {
+        tx_channel_map[ch]->cmd(DSHOT_CMD_MOTOR_STOP);
+      }
+    }
+    delay(1);
+  }
+
   //send zero thottle (0.5 sec)
-  for(int i=0;i<1000;i++) {
+  for(int i=0;i<500;i++) {
     for(int ch=0;ch<RMT_CHANNELS;ch++) {
       if(tx_channel_map[ch]) {
         tx_channel_map[ch]->set(0);
       }
     }
-    delayMicroseconds(500);
+    delay(1);
   }
 
-  //send low thottle (0.5 sec)
-  for(int i=0;i<1000;i++) {
+  //send motor stop (0.5 sec)
+  for(int i=0;i<500;i++) {
     for(int ch=0;ch<RMT_CHANNELS;ch++) {
       if(tx_channel_map[ch]) {
-        tx_channel_map[ch]->set(1);
+        tx_channel_map[ch]->cmd(DSHOT_CMD_MOTOR_STOP);
       }
     }
-    delayMicroseconds(500);
+    delay(1);
   }
 
-  //send zero thottle (0.5 sec)
-  for(int i=0;i<1000;i++) {
-    for(int ch=0;ch<RMT_CHANNELS;ch++) {
-      if(tx_channel_map[ch]) {
-        tx_channel_map[ch]->set(0);
-      }
-    }
-    delayMicroseconds(500);
-  }  
+
 }
 
 void DSHOT::setMode(dshot_mode_t dshot_mode) {
