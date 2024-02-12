@@ -91,7 +91,7 @@ public:
   } dshot_cmd_t;
 
   bool begin(int pin, dshot_mode_t dshot_mode);
-  static void reset(); //reset all ESCs by pulling line low for one second and then sending 0 throttle for one second
+  static void arm(); //reset all ESCs by pulling line low for one second and then sending 0 throttle for one second
   void set(float throttle, bool telem = false); //set throttle 0.0 to 1.0
   void set(int throttle, bool telem = false); //set throttle 0 to 2000
   void cmd(int cmd, bool telem = false); //send command 0 to 47

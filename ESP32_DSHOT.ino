@@ -40,8 +40,8 @@ void setup() {
   dshot3b.begin(23, DSHOT::DSHOT300_BIDIR);
   dshot3.begin(21, DSHOT::DSHOT300);
 
-  //reset the dshot instances: pull pin low for one second, then send 0 throttle for one second
-  DSHOT::reset(); 
+  //arm the dshot instances
+  DSHOT::arm(); 
 }
 
 
@@ -57,10 +57,13 @@ void loop() {
   if(throttle<200) dir = 1;
 
   delayMicroseconds(300); //wait for dshot bidirectional telemetry
-
+/*
   Serial.printf(" throttle=%d ",throttle);
   Serial.printf(" erpm_us=%d ",dshot3b.erpm_us);
   Serial.printf(" temp=%dC ",dshot3b.telem[1]);
   Serial.printf(" bidir_cnt=%d bidir_ok=%d",dshot3b.telem_cnt, dshot3b.telem_ok_cnt);
   Serial.println(); 
+  */
+
+  delay(1);
 }

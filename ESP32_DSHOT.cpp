@@ -1,3 +1,4 @@
+#include "esp32-hal.h"
 #if defined ARDUINO_ARCH_ESP32
 /*==========================================================================================
 ESP32_DSHOT - ESP32 Arduino library for bidirectional DSHOT
@@ -90,8 +91,12 @@ void DSHOT::cmd(int cmd, bool telem) {
 }
 
 
-void DSHOT::reset() {
-  //pull ESC line low for one second
+void DSHOT::arm() {
+  //arm procedure: pull pin low, throttle 0, throttle 1, throttle 0 (each step 0.5 sec)
+  // FVT LittleBee 20A - BlueJay v0.19 -> 300 and 300bidir work
+  // Hobbywing Xrotor Micro 60A 4in1 - BLHeli32 v32.9 -> 300 works, but not 300bidir
+
+  //pull ESC line low (0.5 sec)
   for(int ch=0;ch<RMT_CHANNELS;ch++) {
     if(tx_channel_map[ch]) {
       int pin = tx_channel_map[ch]->get_pin();
@@ -99,17 +104,37 @@ void DSHOT::reset() {
       digitalWrite(pin,LOW);
     }
   }
-  delay(1000);
+  delay(500);
 
-  //send zero thottle for one second
+  //send zero thottle (0.5 sec)
   for(int i=0;i<1000;i++) {
     for(int ch=0;ch<RMT_CHANNELS;ch++) {
       if(tx_channel_map[ch]) {
         tx_channel_map[ch]->set(0);
       }
     }
-    delay(1);
+    delayMicroseconds(500);
   }
+
+  //send low thottle (0.5 sec)
+  for(int i=0;i<1000;i++) {
+    for(int ch=0;ch<RMT_CHANNELS;ch++) {
+      if(tx_channel_map[ch]) {
+        tx_channel_map[ch]->set(1);
+      }
+    }
+    delayMicroseconds(500);
+  }
+
+  //send zero thottle (0.5 sec)
+  for(int i=0;i<1000;i++) {
+    for(int ch=0;ch<RMT_CHANNELS;ch++) {
+      if(tx_channel_map[ch]) {
+        tx_channel_map[ch]->set(0);
+      }
+    }
+    delayMicroseconds(500);
+  }  
 }
 
 void DSHOT::setMode(dshot_mode_t dshot_mode) {
@@ -279,7 +304,6 @@ void DSHOT::rm_setup_tx() {
   //set idle and pull
   if(is_bidirectional) {
     rmt_set_idle_level(tx_channel, true, RMT_IDLE_LEVEL_HIGH); //idle = high
-    gpio_set_pull_mode(pin, GPIO_PULLUP_ONLY); //enable pullup
   }else{
     rmt_set_idle_level(tx_channel, true, RMT_IDLE_LEVEL_LOW); //idle = low
   }
@@ -310,9 +334,7 @@ void DSHOT::rm_setup() {
   rm_setup_tx();
 
   //enable interrupts
-  rmt_isr_register(rmt_isr_handler, NULL, ESP_INTR_FLAG_LEVEL1, &xHandler);
-
-  //rmt_set_rx_intr_en(channel, true);  
+  rmt_isr_register(rmt_isr_handler, NULL, ESP_INTR_FLAG_LEVEL1, &xHandler); 
 }
 
 
@@ -342,6 +364,7 @@ IRAM_ATTR void DSHOT::rm_tx_end_handler() {
   if(is_bidirectional) {
     //switch RMT to receiving
     rmt_set_gpio(rx_channel, RMT_MODE_RX, pin, false);
+    gpio_set_pull_mode(pin, GPIO_PULLUP_ONLY); //enable pullup
     rmt_rx_start(rx_channel, true);
   }
 }
